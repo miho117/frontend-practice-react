@@ -1,15 +1,11 @@
-import AuthStatus from './components/AuthStatus';
+import AddTodo from './components/AddTodo';
 
 function App() {
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-    <h1 className="text-3xl font-bold">AuthStatus</h1>
 
-      <AuthStatus isLoggedIn = {true} />
-      <AuthStatus isLoggedIn = {false} />
+      <AddTodo />
 
-    </div>
   );
 }
 export default App;
