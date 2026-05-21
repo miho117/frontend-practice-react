@@ -1,10 +1,10 @@
-import LikeStatus from './components/LikeStatus';
+import TodoList from './components/TodoList';
 
 function App() {
 
   return (
 
-      <LikeStatus />
+      <TodoList />
 
   );
 }
