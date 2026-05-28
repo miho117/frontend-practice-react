@@ -1,14 +1,15 @@
-import { useState } from 'react';
-import { MdOutlineCheckBox, MdOutlineCheckBoxOutlineBlank } from "react-icons/md";
+import { useState, useEffect } from 'react';
 
-function TodoList() {
+function TodoList({handleClick, selectedTodoId, onLoadingChange}) {
     const [todos, setTodos] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-const fetchTodos = async() => {
-    setLoading(true);
-    setError(null);
+useEffect(() => {
+    const fetchTodos = async() => {
+        setLoading(true);
+        onLoadingChange?.(true); // ローディング開始を通知
+        setError(null);
 
     try {
        const response = await fetch(
@@ -22,43 +23,42 @@ const fetchTodos = async() => {
        const data = await response.json();
        setTodos(data);
        }catch(err){
-       setError(err.messege);
+       setError(err.message);
        }finally{
        setLoading(false);
+       onLoadingChange?.(false); //ローディング終了を通知
        }
     };
 
+    fetchTodos();
+},[]);
+
+  if (error) {
+    return <p>{error}</p>;
+  }
+
     return(
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-            <h1 className="text-3xl font-bold">Todo一覧</h1>
+        <div className="w-3/6 min-h-screen border-r border-gray-200 p-4 overflow-y-auto">
+            <h1 className="text-3xl font-bold mb-8">Todo一覧</h1>
 
-            <button
-              onClick={fetchTodos}
-              disabled={loading}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              {loading ? '読み込み中。。。' : '一覧を取得'}
-            </button>
-
-            {error && (
-              <div className="p-4 bg-red-100 text-red-700 rounded mb-4">
-                {error}
-              </div>
-            )}
-
+            {loading ? (<p>Loading...</p> //ローディング中に表示
+             ) : (
             <ul className="space-y-4">
-                {todos.map(todo => (
-                    <li key={todo.id} className="p-4 bg-white shadow rounded flex item-center gap-4">
-                        <p className="text-red-500">
-                            <span className="text-2xl flex-shrink-0 cursor-pointer">
-                                {todo.completed ? (
-                                 <MdOutlineCheckBox className="text-red-500" />
-                                ):(<MdOutlineCheckBoxOutlineBlank className="text-gray-400"/>) 
-                                }</span></p>
-                        <p className="text-black">{todo.title}</p>
-                    </li>
-                ))}
+            {todos.map((todo) => {
+                const isSelected = todo?.id === selectedTodoId;
+
+                    return(
+                        <li key={todo.id} className="p-4 bg-white shadow rounded flex items-center gap-4">
+                            <p onClick={()=>handleClick(todo)} 
+                            className={`cursor-pointer w-full transition-colors 
+                            ${isSelected ? 'text-blue-500 font-bold' : 'text-black'}`}
+                            >
+                            {todo.title}</p>
+                        </li>
+                    );
+                })}
             </ul>
+            )}
         </div>
     );
 };
