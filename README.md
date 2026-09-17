@@ -1,16 +1,120 @@
-# React + Vite
+# Frontend Practice with React
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+フロントエンド技術理解（状態管理、ロジック分離、例外処理）を深めるために作成している、Reactの個人学習・検証用リポジトリです。
 
-Currently, two official plugins are available:
+単に画面を作成するだけでなく、「仕様通りに挙動するか」「不具合が発生しにくい構造か」といった品質面の観点を意識して実装に取り組んでいます。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 学習・検証の目的
+* **状態管理（State）の理解:** UIとデータ状態の同期、イベント発生時の挙動検証
+* **ロジック分離（Custom Hooks）:** 画面表示と共通ロジックの分離構造の把握
+* **例外処理・バリデーション:** 不適切な入力や境界値に対するエラーハンドリングの検証
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 使用技術
+* **Frontend:** React, Vite, Tailwind CSS
+* **Version Control:** Git, GitHub
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## 実装機能とテスト・品質観点
+
+### 1. JSXの基本
+* **概要:** JSXによる変数の埋め込みと、三項演算子を用いた条件付きレンダリング・動的スタイリングの実装
+* **テスト・品質観点:**
+  * **動的レンダリング:** `isLoggedIn` および `isDone` のフラグ切替に伴い、指定されたテキスト（「ログイン中」等）とTailwind CSSのクラス（文字色）が正確に切り替わるか検証
+  * **境界値・Nullハンドリング:** 変数（`name` / `year`）が空文字や `null` / `undefined` の場合に、画面描画が崩れたりクラッシュしたりしないか確認
+
+### 2. コンポーネントの基本
+* **概要:** ログイン状態（`isLoggedIn`）に応じたコンポーネント（`LoggedIn` / `LoggedOut`）の分割作成と条件付きレンダリング
+* **テスト・品質観点:**
+  * **コンポーネント切り替え検証:** フラグ変更時に意図した子コンポーネントのみが正しく描画・再レンダリングされ、不要な要素がDOM上に残らないか
+  * **コンポーネントの独立性:** 子コンポーネント側でスタイリング（Tailwindクラス）や表示ロジックがカプセル化されており、他のコンポーネントへ影響を与えないか
+
+### 3. Props
+* **概要:** 親コンポーネント（App）から子コンポーネント（AuthStatus）へProps経由で状態（`isLoggedIn`）を伝播・再利用
+* **テスト・品質観点:**
+  * **Propsの伝播・差分描画:** 同一コンポーネントに対し、渡すPropsの値（`true` / `false`）に応じてそれぞれのインスタンスが独立して正しいUI（表示・スタイル）を描画できるか
+  * **デフォルト値・未定義チェック:** Propsが渡されなかった場合（`undefined`）に、エラーでクラッシュせずフォールバック処理（デフォルト値の適用等）ができるか検証
+
+### 4. Stateの管理
+* **概要:** フォーム入力値および配列データ（Todoリスト）のuseStateによる状態管理と要素の追加・動的表示
+* **テスト・品質観点:**
+  * **入力バリデーション（境界値テスト）:** 空文字やスペースのみ（`trim()`）の入力時に「追加」を押しても、配列（State）へ登録されないガード処理が正しく機能するか
+  * **Stateの更新確認:** 追加処理後に入力フィールド（`inputValue`）が空文字へ初期化され、一覧（UI）に即座に追加要素が描画されるか
+  * **空状態（Empty State）表示:** リスト要素が0件の場合に指定のメッセージ（「Todoがありません」）が表示され、1件以上で非表示に切り替わるか
+
+### 5. イベントハンドリング
+* **概要:** クリックイベントに伴う「いいね」状態（トグル）およびカウント数の加減算（関数型更新）の実装
+* **テスト・品質観点:**
+  * **トグル状態の連動検証:** クリック時にアイコン（ハートの塗りつぶし有無）、数値（+1 / -1）、カラークラスが整合性を保って切り替わるか
+  * **連続クリック（イベント連打）の耐久テスト:** 高速で連打した際に、関数型更新（`prev => ...`）により数値がマイナス（負の数）になったり表示がずれたりしないか検証
+
+### 6. fetch APIとデータ取得 & 7. useEffect
+* **概要:** API（JSONPlaceholder）からTodoデータ一覧を取得し、詳細表示コンポーネントへ連携
+* **テスト・品質観点:**
+  * **ステート表示切り替え:** データ取得中（Loading）、正常取得後（Success）、取得失敗時（Error）の各状態に応じた画面表示が正しく遷移するか
+  * **オプショナルチェイニングの検証:** `onLoadingChange?.()` や `todo?.id` を用い、Propsやデータが未定義（null / undefined）の場合でもクラッシュ（画面不具合）しないか
+  * **UIインタラクション:** 選択中のTodo（ID一致時）に動的なスタイル（青字・太字）が正しく適用され、非選択時は未選択時の表示へ切り替わるか
+  * **空状態（Empty State）の制御:** Todoが未選択の状態で `TodoDetail` がレンダリングされた際、クラッシュせずにガイドメッセージが表示されるか
+
+### 8. useContext
+* **概要:** React Context とカスタムフック（`useAuth`）によるグローバルな認証状態（`user` / `login` / `logout`）の管理およびエントリーポイント（`main.jsx`）でのProviderラップ処理
+* **テスト・品質観点:**
+  * **Provider外アクセスの例外検知:** `AuthProvider` の範囲外で `useAuth` フックが呼び出された際、明示的なエラー（`useAuth must be used within AuthProvider`）をスローして不正利用を防止できているか
+  * **グローバル状態の伝播検証:** `login`（ユーザー情報セット）および `logout`（`null` 化）実行時に、Contextを介してアプリケーション全体の表示切り替えが即座に同期されるか
+  * **未認証状態の初期値テスト:** `user` の初期値が `null` として安全にセットされ、不整合なデータで画面が描画されないか確認
+
+### 9. useReducer
+* **概要:** useReducerを用いたショッピングカートの複雑な状態遷移（追加・数量変更・個別削除・一括削除）の一元管理と金額計算の実装
+* **テスト・品質観点:**
+  * **重複データの状態統合（ADD_ITEM）:** 既存商品を追加した際に別要素として重複登録されず、既存の `qty`（数量）のみを加算して状態の整合性が保たれるか検証
+  * **境界値における削除連動（UPDATE_QUANTITY）:** 数量をマイナスや「0」へ変更した際、自動的に対象アイテムがカートから削除される境界値ハンドリングのテスト
+  * **計算精度の検証（reduce）:** アイテムの追加・削除・数量変更に伴い、合計金額（`totalPrice`）が誤差なくリアルタイムに正しく計算・再描画されるか確認
+  * **空状態（Empty State）遷移:** 一括削除（`CLEAR_CART`）実行時、カートが空になり画面が「カートは空です」の表示へ正常に切り替わるか検証
+
+### 10. カスタムフック
+* **概要:** 再利用可能なオン/オフ状態管理フック（`useToggle`）の自作と、パスワード表示切替およびモーダル開閉UIへの適用
+* **テスト・品質観点:**
+  * **ロジックの再利用性と独立性:** 同一フック（`useToggle`）を複数箇所で使用した際、それぞれの状態（`isShow` / `isOpen`）が互いに干渉せず独立して保持・更新されるか検証
+  * **セキュリティ・表示属性の切替:** パスワード入力欄の `type` 属性（`"password"` ⇄ `"text"`）および可視化アイコン（`IoMdEye` / `IoMdEyeOff`）が正確に動的同期されるかテスト
+  * **確定操作の安全性:** モーダル開閉において単なる反転（toggle）だけでなく、明示的な `setTrue` / `setFalse` を用いることで誤作動（意図しない二重開閉など）が防止できているか確認
+  * **レンダリング最適化:** `useCallback` の適用により、親コンポーネントの再レンダリング時にも不要な関数の再生成が発生しないか確認
+
+---
+
+## コミット・更新履歴について
+学習の過程や思考プロセスを記録するため、機能単位でのこまめな Git コミットを意識して管理しています。
+
+---
+
+## 起動手順
+
+```bash
+# リポジトリのクローン
+git clone <リポジトリのURL>
+
+# ディレクトリへ移動
+cd <ディレクトリ名>
+
+# 依存パッケージのインストール
+npm install
+
+# 開発サーバーの起動
+npm run dev
+
+```
+
+## ディレクトリ構造
+
+```text
+src/
+├── components/     # 各学習用コンポーネント（ProductList, Cart, TodoDetail など）
+├── context/        # React Context (AuthContext.jsx)
+├── hooks/          # カスタムフック (useToggle.js)
+├── App.jsx         # メインコンポーネント
+└── main.jsx        # エントリーポイント (AuthProviderラップ)
+
+```
